@@ -1,7 +1,7 @@
-PWD /home/asd/Documents/school/PRE/Diploma_MSAB_20220312/MUST Thesis
+PWD /home/asd/Documents/school/PRE/latex_src
 INPUT /usr/share/texmf-dist/web2c/texmf.cnf
 INPUT /var/lib/texmf/web2c/pdftex/pdflatex.fmt
-INPUT /home/asd/Documents/school/PRE/Diploma_MSAB_20220312/MUST Thesis/main.tex
+INPUT /home/asd/Documents/school/PRE/latex_src/main.tex
 OUTPUT main.log
 INPUT ./MUST-Thesis.cls
 INPUT ./MUST-Thesis.cls
