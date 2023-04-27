@@ -14,6 +14,7 @@ def create_app():
 
     # Load the application configuration
     app.config.from_object(Config)
+    # app.file_service = file_service
 
     # Initialize the Flask extensions
     db.init_app(app)
@@ -28,5 +29,9 @@ def create_app():
     app.register_blueprint(users_bp)
     app.register_blueprint(files_bp)
     app.register_blueprint(auth_bp)
+
+    # Register services
+    from app.services.user_service import UserService
+    app.user_service = UserService()
 
     return app
