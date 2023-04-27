@@ -6,7 +6,6 @@ from app.config import Config
 
 # Initialize the Flask extensions
 db = SQLAlchemy()
-migrate = Migrate()
 login = LoginManager()
 
 def create_app():
@@ -18,7 +17,7 @@ def create_app():
 
     # Initialize the Flask extensions
     db.init_app(app)
-    migrate.init_app(app, db)
+    migrate = Migrate(app, db)
     login.init_app(app)
 
     # Register the blueprints
