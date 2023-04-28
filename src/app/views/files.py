@@ -7,7 +7,6 @@ from app.models import File
 
 files_bp = Blueprint('files', __name__)
 
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
     return '.' in filename and \

@@ -34,4 +34,5 @@ def create_app():
     from app.services.user_service import UserService
     app.user_service = UserService()
 
+    # Register error handlers
     return app

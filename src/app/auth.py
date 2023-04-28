@@ -39,6 +39,7 @@ def register():
         return jsonify({'message': 'User already registered.'}), 400
 
     email = request.json.get('email')
+    username = request.json.get('username')
     password = request.json.get('password')
     confirm_password = request.json.get('confirm_password')
 
@@ -55,7 +56,7 @@ def register():
 
     password_hash = generate_password_hash(password)
 
-    user = User(email=email, password_hash=password_hash)
+    user = User(email=email, password_hash=password_hash, username=username)
     db.session.add(user)
     db.session.commit()
 
