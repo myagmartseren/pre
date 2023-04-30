@@ -4,14 +4,8 @@ provider "google" {
 }
 
 resource "google_kubernetes_engine_cluster" "default" {
-  name = "my-cluster"
+  name = var.cluster_name
   location = var.region
-}
-
-resource "google_cloudbuild_trigger" "default" {
-  name = "my-trigger"
-  description = "Builds and deploys my application."
-  trigger_template {
-    filename = "cloudbuild.yaml"
-  }
+  node_version = "1.19.10"
+  node_count = 3
 }
