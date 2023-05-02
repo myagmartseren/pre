@@ -17,15 +17,17 @@ def register():
     Returns a JSON object with the newly created user's ID and username.
     """
     data = request.get_json()
-    username = data.get('username')
+    name = data.get('name')
     password = data.get('password')
-    if not username or not password:
+    email = data.get('email')
+
+    if not name or not password:
         return jsonify({'error': 'Missing username or password'}), 400
-    existing_user = User.query.filter_by(username=username).first()
+    existing_user = User.query.filter_by(username=name).first()
     if existing_user:
         return jsonify({'error': 'Username already taken'}), 400
     hashed_password = generate_password_hash(password)
-    user = User(username=username, password=hashed_password)
+    user = User(name=name, password=hashed_password)
     db.session.add(user)
     db.session.commit()
     return jsonify({'id': user.id, 'username': user.username})
