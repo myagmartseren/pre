@@ -2,10 +2,10 @@ Flask
 SQLAlchemy 
 Flask-SQLAlchemy
 psycopg2-binary
-flask_migrate
 flask-login
 python-dotenv
 marshmallow
 umbral
 Flask-JWT-Extended
 Flask-Cors
+Flask-Migrate
