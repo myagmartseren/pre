@@ -1,78 +1,26 @@
-from app import db, login
-from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
+from app import db
+from sqlalchemy.orm import backref
 
-class File(db.Model):
+class User(db.Model):
+    __tablename__ = 'users'
+
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    type = db.Column(db.String(128), nullable=False)
-    name = db.Column(db.String(128), nullable=False)
-    path = db.Column(db.String(256), nullable=False)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'name': self.name,
-            'path': self.path,
-            'type':self.type
-        }
-
-class Share(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    delegator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    delegatee_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    file_id = db.Column(db.Integer, db.ForeignKey('file.id'), nullable=False)
-    is_active = db.Column(db.Boolean, nullable=False)
-    re_key = db.Column(db.String(256), nullable=False)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'delegator_id': self.delegator_id,
-            'delegatee_id': self.delegatee_id,
-            'file_id': self.file_id,
-            'is_active':self.is_active,
-            're_key':self.re_key,
-        }
-
-class Log(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    file_id = db.Column(db.Integer, db.ForeignKey('file.id'), nullable=False)
-    action = db.Column(db.String(256), nullable=False)
-    date = db.Column(db.DateTime(timezone=True),server_default=db.func.now(), nullable=False)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'name': self.filename,
-            'path': self.filepath,
-            'type':self.type
-        }
-
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(120),nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
-    public_key = db.Column(db.String(128), nullable=True)
-    private_key = db.Column(db.String(128), nullable=True)
+    files = db.relationship('File', backref='owner', lazy=True)
 
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+class File(db.Model):
+    __tablename__ = 'files'
 
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    shares = db.relationship('Share', backref='file', lazy=True)
 
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'email': self.email,
-            'public_key':self.public_key
-        }
+class Share(db.Model):
+    __tablename__ = 'shares'
 
-@login.user_loader
-def load_user(id):
-    return User.query.get(int(id))
+    id = db.Column(db.Integer, primary_key=True)
+    file_id = db.Column(db.Integer, db.ForeignKey('files.id'), nullable=False)
+    recipient_id = db.Column(db.Integer, nullable=False)
+    prf_key = db.Column(db.String(256), nullable=False)

@@ -1,38 +1,29 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_login import LoginManager
+from flask_jwt_extended import JWTManager
+from flask_cors import CORS
+
 from app.config import Config
 
-# Initialize the Flask extensions
 db = SQLAlchemy()
-login = LoginManager()
+migrate = Migrate()
+jwt = JWTManager()
+cors = CORS()
 
-def create_app():
-    # Create the Flask application instance
+def create_app(config_class=Config):
     app = Flask(__name__)
+    app.config.from_object(config_class)
 
-    # Load the application configuration
-    app.config.from_object(Config)
-    # app.file_service = file_service
-
-    # Initialize the Flask extensions
     db.init_app(app)
-    migrate = Migrate(app, db)
-    login.init_app(app)
+    migrate.init_app(app, db)
+    jwt.init_app(app)
+    cors.init_app(app)
 
-    # Register the blueprints
-    from app.views.users import users_bp
-    from app.views.files import files_bp
-    from app.auth import auth_bp
-
-    app.register_blueprint(users_bp)
-    app.register_blueprint(files_bp)
+    from app.auth import bp as auth_bp
     app.register_blueprint(auth_bp)
 
-    # Register services
-    from app.services.user_service import UserService
-    app.user_service = UserService()
+    from app.routes import bp as main_bp
+    app.register_blueprint(main_bp)
 
-    # Register error handlers
     return app

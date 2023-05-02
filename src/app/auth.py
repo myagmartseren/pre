@@ -1,63 +1,51 @@
-from flask import Blueprint, request, jsonify
-from flask_login import current_user, login_user, logout_user, login_required
+from flask import Blueprint, jsonify, request
 from werkzeug.security import check_password_hash, generate_password_hash
-from app import db
+
 from app.models import User
+from app.models import db
 
-auth_bp = Blueprint('auth_bp', __name__, url_prefix='/auth')
+bp = Blueprint('auth', __name__, url_prefix='/auth')
 
-@auth_bp.route('/login', methods=['POST'])
-def login():
-    if current_user.is_authenticated:
-        return jsonify({'message': 'User already logged in.'}), 400
 
-    email = request.json.get('email')
-    password = request.json.get('password')
-    remember_me = request.json.get('remember_me')
-
-    if not email or not password:
-        return jsonify({'message': 'Email and password are required.'}), 400
-
-    user = User.query.filter_by(email=email).first()
-
-    if not user or not check_password_hash(user.password_hash, password):
-        return jsonify({'message': 'Invalid email or password.'}), 400
-
-    login_user(user, remember=remember_me)
-
-    return jsonify({'message': 'Logged in successfully.'}), 200
-
-@auth_bp.route('/logout', methods=['POST'])
-@login_required
-def logout():
-    logout_user()
-    return jsonify({'message': 'Logged out successfully.'}), 200
-
-@auth_bp.route('/register', methods=['POST'])
+@bp.route('/register', methods=['POST'])
 def register():
-    if current_user.is_authenticated:
-        return jsonify({'message': 'User already registered.'}), 400
-
-    email = request.json.get('email')
-    username = request.json.get('username')
-    password = request.json.get('password')
-    confirm_password = request.json.get('confirm_password')
-
-    if not email or not password or not confirm_password:
-        return jsonify({'message': 'Email, password, and confirm password are required.'}), 400
-
-    if password != confirm_password:
-        return jsonify({'message': 'Passwords do not match.'}), 400
-
-    existing_user = User.query.filter_by(email=email).first()
-
+    """
+    Endpoint for registering a new user.
+    Expects a JSON payload with the following fields:
+    - username
+    - password
+    Returns a JSON object with the newly created user's ID and username.
+    """
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    if not username or not password:
+        return jsonify({'error': 'Missing username or password'}), 400
+    existing_user = User.query.filter_by(username=username).first()
     if existing_user:
-        return jsonify({'message': 'Email already registered.'}), 400
-
-    password_hash = generate_password_hash(password)
-
-    user = User(email=email, password_hash=password_hash, username=username)
+        return jsonify({'error': 'Username already taken'}), 400
+    hashed_password = generate_password_hash(password)
+    user = User(username=username, password=hashed_password)
     db.session.add(user)
     db.session.commit()
+    return jsonify({'id': user.id, 'username': user.username})
 
-    return jsonify({'message': 'User registered successfully.'}), 201
+
+@bp.route('/login', methods=['POST'])
+def login():
+    """
+    Endpoint for user authentication.
+    Expects a JSON payload with the following fields:
+    - username
+    - password
+    Returns a JSON object with the authenticated user's ID and username.
+    """
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    if not username or not password:
+        return jsonify({'error': 'Missing username or password'}), 400
+    user = User.query.filter_by(username=username).first()
+    if not user or not check_password_hash(user.password, password):
+        return jsonify({'error': 'Invalid username or password'}), 401
+    return jsonify({'id': user.id, 'username': user.username})
