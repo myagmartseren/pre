@@ -24,15 +24,15 @@ alices_signer = Signer(alices_signing_key)
 
 plaintext = b'Proxy Re-encryption is cool!'
 capsule, ciphertext = encrypt(alices_public_key, plaintext)
-print("capsule",dir(capsule))
-print("capsule get something",capsule.__bytes__().hex())
+# print("capsule",dir(capsule))
+# print("capsule get something",capsule.__bytes__().hex())
 capsule = Capsule._from_exact_bytes(capsule.__bytes__())
 
 # capsule,test = Capsule.from_public_key(alices_signing_key.public_key())
 # newcaplsule.
-print(capsule.__bytes__().hex())
+# print(capsule.__bytes__().hex())
 
-print("ciphertext:",ciphertext.hex())
+# print("ciphertext:",ciphertext.hex())
 
 # Decrypt data for Alice
 # ----------------------
@@ -40,7 +40,7 @@ print("ciphertext:",ciphertext.hex())
 # Alice can open the capsule and decrypt the ciphertext with her private key.
 
 cleartext = decrypt_original(alices_secret_key, capsule, ciphertext)
-print("cleartext:",cleartext)
+# print("cleartext:",cleartext)
 
 # Bob Exists
 # -----------
@@ -68,7 +68,7 @@ except ValueError:
 kfrags = generate_kfrags(delegating_sk=alices_secret_key,
                          receiving_pk=bobs_public_key,
                          signer=alices_signer,
-                         threshold=10,
+                         threshold=1,
                          shares=20)
 
 # Ursulas perform re-encryption
@@ -80,7 +80,7 @@ kfrags = generate_kfrags(delegating_sk=alices_secret_key,
 # one for each required Ursula.
 
 kfrags = random.sample(kfrags,  # All kfrags from above
-                       10)      # M - Threshold
+                       1)      # M - Threshold
 
 # Bob collects the resulting `cfrags` from several Ursulas.
 # Bob must gather at least `threshold` `cfrags` in order to open the capsule.
@@ -90,7 +90,8 @@ for kfrag in kfrags:
     cfrag = reencrypt(capsule=capsule, kfrag=kfrag)
     cfrags.append(cfrag)  # Bob collects a cfrag
 
-assert len(cfrags) == 10
+print("len",len(cfrags))
+assert len(cfrags) == 1
 print("cfrags:",cfrags)
 # Bob checks the capsule fragments
 # --------------------------------
@@ -100,6 +101,7 @@ print("cfrags:",cfrags)
 
 suspicious_cfrags = [CapsuleFrag.from_bytes(bytes(cfrag)) for cfrag in cfrags]
 
+# print(len(suspicious_cfrags))
 cfrags = [cfrag.verify(capsule,
                        verifying_pk=alices_verifying_key,
                        delegating_pk=alices_public_key,
@@ -116,7 +118,15 @@ bob_cleartext = decrypt_reencrypted(receiving_sk=bobs_secret_key,
                                     capsule=bob_capsule,
                                     verified_cfrags=cfrags,
                                     ciphertext=ciphertext)
+
 print("cfrags",cfrags)
 print("kfrags",kfrags)
 print("bob clear text:", bob_cleartext)
 assert bob_cleartext == plaintext
+
+bob_cleartext = decrypt_reencrypted(receiving_sk=bobs_secret_key,
+                                    delegating_pk=alices_public_key,
+                                    capsule=bob_capsule,
+                                    verified_cfrags=cfrags,
+                                    ciphertext=ciphertext)
+print(bob_cleartext)

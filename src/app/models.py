@@ -5,15 +5,19 @@ class User(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), unique=True, nullable=False)
+    first_name = db.Column(db.String(120), unique=True, nullable=False)
+    last_name = db.Column(db.String(120), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     public_key = db.Column(db.LargeBinary, unique=False, nullable=True)
+    signer_key = db.Column(db.LargeBinary, unique=False, nullable=True)
     private_key = db.Column(db.LargeBinary, unique=False, nullable=True)
     password_hash = db.Column(db.String(128), nullable=False)
-    files = db.relationship('File', backref='owner', lazy=True)
+
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
     deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    
+    files = db.relationship('File', backref='owner', lazy=True)
 
 class File(db.Model):
     __tablename__ = 'files'
@@ -23,9 +27,12 @@ class File(db.Model):
     type = db.Column(db.String(50), nullable=False)
     path = db.Column(db.String(256), nullable=False)
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    key = db.Column(db.LargeBinary, unique=False, nullable=True)
+    
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
     deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
     shares = db.relationship('Share', backref='file', lazy=True)
 
 class Share(db.Model):
@@ -35,7 +42,9 @@ class Share(db.Model):
     file_id = db.Column(db.Integer, db.ForeignKey('files.id'), nullable=False)
     delegator_id = db.Column(db.Integer,db.ForeignKey('users.id'), nullable=False)
     delegatee_id = db.Column(db.Integer,db.ForeignKey('users.id'), nullable=False)
-    re_key = db.Column(db.String(256), nullable=False)
+    capsule = db.Column(db.LargeBinary, unique=False, nullable=True)
+    re_key = db.Column(db.LargeBinary, unique=False, nullable=True)
+
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
     deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)

@@ -3,45 +3,45 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.models import User
 from app.models import db
+from .utils import generate_key
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 @bp.route('/register', methods=['POST'])
 def register():
-    """
-    Endpoint for registering a new user.
-    Expects a JSON payload with the following fields:
-    - username
-    - password
-    Returns a JSON object with the newly created user's ID and username.
-    """
     data = request.get_json()
-    name = data.get('name')
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+
     password = data.get('password')
     email = data.get('email')
 
-    if not name or not password:
-        return jsonify({'error': 'Missing username or password'}), 400
-    existing_user = User.query.filter_by(username=name).first()
+    if not email or not password:
+        return jsonify({'error': 'Missing email or password'}), 400
+    existing_user = User.query.filter_by(email=email).first()
     if existing_user:
-        return jsonify({'error': 'Username already taken'}), 400
+        return jsonify({'error': 'email already taken'}), 400
     hashed_password = generate_password_hash(password)
-    user = User(name=name, password=hashed_password)
+    public_key, secret_key = generate_key()
+    signer_key, _ = generate_key()
+    
+    user = User(
+        first_name=first_name, 
+        last_name=last_name, 
+        password=hashed_password,
+        public_key = public_key.__bytes__(),
+        private_key = secret_key.__bytes__(),
+        signer_key = signer_key.__bytes__(),
+    )
+
     db.session.add(user)
     db.session.commit()
-    return jsonify({'id': user.id, 'username': user.username})
+    return jsonify({'id': user.id, 'private': user.private_key.hex()})
 
 
 @bp.route('/login', methods=['POST'])
 def login():
-    """
-    Endpoint for user authentication.
-    Expects a JSON payload with the following fields:
-    - username
-    - password
-    Returns a JSON object with the authenticated user's ID and username.
-    """
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
