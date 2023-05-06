@@ -1,7 +1,7 @@
 import random
 from umbral import (
     SecretKey, Signer, CapsuleFrag,
-    encrypt, generate_kfrags, reencrypt, decrypt_original, decrypt_reencrypted)
+    encrypt, generate_kfrags, reencrypt, decrypt_original, decrypt_reencrypted, Capsule)
 
 # Generate an Umbral key pair
 # ---------------------------
@@ -25,6 +25,11 @@ alices_signer = Signer(alices_signing_key)
 plaintext = b'Proxy Re-encryption is cool!'
 capsule, ciphertext = encrypt(alices_public_key, plaintext)
 print("capsule",dir(capsule))
+print("capsule get something",capsule.__bytes__().hex())
+newcaplsule = Capsule._from_exact_bytes(capsule.__bytes__())
+# newcaplsule.
+print(newcaplsule.__bytes__().hex())
+
 print("ciphertext:",ciphertext.hex())
 
 # Decrypt data for Alice
