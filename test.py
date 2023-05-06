@@ -26,9 +26,11 @@ plaintext = b'Proxy Re-encryption is cool!'
 capsule, ciphertext = encrypt(alices_public_key, plaintext)
 print("capsule",dir(capsule))
 print("capsule get something",capsule.__bytes__().hex())
-newcaplsule = Capsule._from_exact_bytes(capsule.__bytes__())
+capsule = Capsule._from_exact_bytes(capsule.__bytes__())
+
+# capsule,test = Capsule.from_public_key(alices_signing_key.public_key())
 # newcaplsule.
-print(newcaplsule.__bytes__().hex())
+print(capsule.__bytes__().hex())
 
 print("ciphertext:",ciphertext.hex())
 
@@ -89,7 +91,7 @@ for kfrag in kfrags:
     cfrags.append(cfrag)  # Bob collects a cfrag
 
 assert len(cfrags) == 10
-
+print("cfrags:",cfrags)
 # Bob checks the capsule fragments
 # --------------------------------
 # If Bob received the capsule fragments in serialized form,
@@ -114,5 +116,7 @@ bob_cleartext = decrypt_reencrypted(receiving_sk=bobs_secret_key,
                                     capsule=bob_capsule,
                                     verified_cfrags=cfrags,
                                     ciphertext=ciphertext)
+print("cfrags",cfrags)
+print("kfrags",kfrags)
 print("bob clear text:", bob_cleartext)
 assert bob_cleartext == plaintext
