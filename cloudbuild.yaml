@@ -1,5 +1,0 @@
-steps:
-  - name: "gcr.io/cloud-builders/docker"
-    args: ["build", "-t", "gcr.io/my-project/my-app:latest", "."]
-  - name: "gcr.io/cloud-builders/kubectl"
-    args: ["apply", "-f", "kubernetes/deployment.yaml"]

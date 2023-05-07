@@ -5,8 +5,9 @@ class User(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(120), unique=True, nullable=False)
-    last_name = db.Column(db.String(120), unique=True, nullable=False)
+    username = db.Column(db.String(120), unique=True, nullable=False)
+    firstname = db.Column(db.String(120), unique=True, nullable=False)
+    lastname = db.Column(db.String(120), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     public_key = db.Column(db.LargeBinary, unique=False, nullable=True)
     signer_key = db.Column(db.LargeBinary, unique=False, nullable=True)
@@ -43,7 +44,7 @@ class Share(db.Model):
     delegator_id = db.Column(db.Integer,db.ForeignKey('users.id'), nullable=False)
     delegatee_id = db.Column(db.Integer,db.ForeignKey('users.id'), nullable=False)
     capsule = db.Column(db.LargeBinary, unique=False, nullable=True)
-    re_key = db.Column(db.LargeBinary, unique=False, nullable=True)
+    rekey = db.Column(db.LargeBinary, unique=False, nullable=True)
 
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
