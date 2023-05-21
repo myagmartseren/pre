@@ -24,7 +24,7 @@ def create_file():
     owner_id = request.form['owner_id']
 
     # Create new file and add it to the database
-    file = File(name=name, content=content, owner_id=owner_id)
+    file = File(name=name, owner_id=owner_id)
     create_file(file)
 
     return jsonify(schemas.File.dump(file))
