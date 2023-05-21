@@ -9,8 +9,8 @@ class User(db.Model):
     firstname = db.Column(db.String(120), unique=True, nullable=False)
     lastname = db.Column(db.String(120), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    public_key = db.Column(db.LargeBinary, unique=False, nullable=True)
-    signer_key = db.Column(db.LargeBinary, unique=False, nullable=True)
+    public_key = db.Column(db.Text, unique=False, nullable=True)
+    signer_key = db.Column(db.Text, unique=False, nullable=True)
     password_hash = db.Column(db.String(128), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
 
@@ -29,15 +29,18 @@ class File(db.Model):
     name = db.Column(db.String(120), nullable=False)
     path = db.Column(db.String(256), nullable=False)
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    key = db.Column(db.LargeBinary, unique=False, nullable=True)
-    capsule = db.Column(db.LargeBinary, unique=False, nullable=True)
+    key = db.Column(db.Text, unique=False, nullable=True)
+    capsule = db.Column(db.Text, unique=False, nullable=True)
     
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
     deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
     shares = db.relationship('Share', backref='file', lazy=True)
-
+    # @pre_dump
+    def pre_dump(self, obj):
+        obj.name = obj.filename
+        return obj
 class Share(db.Model):
     __tablename__ = 'shares'
 
@@ -45,7 +48,7 @@ class Share(db.Model):
     file_id = db.Column(db.Integer, db.ForeignKey('files.id'), nullable=False)
     delegator_id = db.Column(db.Integer,db.ForeignKey('users.id'), nullable=False)
     delegatee_id = db.Column(db.Integer,db.ForeignKey('users.id'), nullable=False)
-    rekey = db.Column(db.LargeBinary, unique=False, nullable=True)
+    rekey = db.Column(db.Text, unique=False, nullable=True)
 
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
