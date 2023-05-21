@@ -38,13 +38,12 @@ def register():
         username = username,
         password_hash = hashed_password,
         public_key = public_key.__bytes__(),
-        private_key = secret_key.to_secret_bytes(),
         signer_key = signer_key.__bytes__(),
     )
 
     db.session.add(user)
     db.session.commit()
-    return jsonify({'id': user.id, 'private': user.private_key.hex()})
+    return jsonify({'id': user.id, 'private_key': secret_key.to_secret_bytes().hex()})
 
 
 @bp.route('/login', methods=['POST'])
@@ -57,4 +56,4 @@ def login():
     user = User.query.filter_by(email=email).first()
     if not user or not check_password_hash(user.password_hash, password):
         return jsonify({'error': 'Invalid username or password'}), 401
-    return jsonify(user)
+    return jsonify({"username":user.username})
