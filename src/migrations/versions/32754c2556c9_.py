@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 711cd78b61a1
+Revision ID: 32754c2556c9
 Revises: 
-Create Date: 2023-05-14 10:23:44.582003
+Create Date: 2023-05-21 21:09:54.787151
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '711cd78b61a1'
+revision = '32754c2556c9'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -26,8 +26,8 @@ def upgrade():
     sa.Column('email', sa.String(length=120), nullable=False),
     sa.Column('public_key', sa.LargeBinary(), nullable=True),
     sa.Column('signer_key', sa.LargeBinary(), nullable=True),
-    sa.Column('private_key', sa.LargeBinary(), nullable=True),
     sa.Column('password_hash', sa.String(length=128), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
@@ -40,10 +40,10 @@ def upgrade():
     op.create_table('files',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=120), nullable=False),
-    sa.Column('type', sa.String(length=50), nullable=False),
     sa.Column('path', sa.String(length=256), nullable=False),
     sa.Column('owner_id', sa.Integer(), nullable=False),
     sa.Column('key', sa.LargeBinary(), nullable=True),
+    sa.Column('capsule', sa.LargeBinary(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
@@ -67,7 +67,6 @@ def upgrade():
     sa.Column('file_id', sa.Integer(), nullable=False),
     sa.Column('delegator_id', sa.Integer(), nullable=False),
     sa.Column('delegatee_id', sa.Integer(), nullable=False),
-    sa.Column('capsule', sa.LargeBinary(), nullable=True),
     sa.Column('rekey', sa.LargeBinary(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),

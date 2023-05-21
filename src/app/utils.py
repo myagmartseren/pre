@@ -20,4 +20,23 @@ OUTPUT_PATH = Path(__file__).parent
 
 def relative_to_files(path:str) -> Path:
     ASSETS_PATH = OUTPUT_PATH / Path(r"../files")
-    return ASSETS_PATH / Path(path)
+    return ASSETS_PATH
+
+from itsdangerous import URLSafeTimedSerializer
+from flask import current_app
+import jwt
+
+from datetime import datetime, timedelta
+
+def generate_token(user):
+    current_time = datetime.utcnow()
+    expiration_time = current_time + timedelta(hours=1)
+
+    payload = {
+        'user_id': user.id,
+        'exp': expiration_time,
+        'iat': current_time
+    }
+    token = jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
+
+    return token
