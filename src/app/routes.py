@@ -25,7 +25,11 @@ def get_users():
 @bp.route('/users/<email>', methods=['GET'])
 @login_required
 def get_user(email):
-    user = User.query.filter_by(email = email).first()
+    if email.isnumeric():
+        user =User.query.get(email)
+        # user = User.query.().first()
+    else:
+        user = User.query.filter_by(email = email).first()
 
     if not user:
         return jsonify({'message': 'User not found'}), 404
@@ -41,9 +45,9 @@ def get_files():
     delegatee_id = query_params.get("delegatee_id")
     
     if delegator_id is not None:
-        query = File.query.filter_by(delegator_id=delegator_id)
+        query = File.query.filter_by(delegator_id=current_user.id)
     elif delegatee_id is not None:
-        query = File.query.filter_by(delegatee_id=delegatee_id)
+        query = File.query.filter_by(delegatee_id=current_user.id)
     else:
         print("owner_id")
         query = File.query.filter_by(owner_id=current_user.id)
@@ -53,6 +57,23 @@ def get_files():
     return jsonify(file_schema.dump(files))  # Serialize the files using the schema
 
     # return jsonify(schemas.File.dump(files, many=True,obj=files))
+
+@bp.route('/files/shares', methods=['GET'])
+@login_required
+def get_files_by_delegate():
+    query_params = request.args
+    delegator_id = query_params.get("delegator_id")
+    delegatee_id = query_params.get("delegatee_id")
+    
+    if delegator_id is not None:
+        query = db.session.query(File).join(Share).filter(Share.delegator_id ==current_user.id)
+    elif delegatee_id is not None:
+        query = db.session.query(File).join(Share).filter(Share.delegatee_id ==current_user.id)
+    else:
+        query = File.query.filter_by(owner_id=current_user.id)
+    files = query.all()
+    file_schema = schemas.File(many=True)  # Create an instance of the File schema
+    return jsonify(file_schema.dump(files))  # Serialize the files using the schema
 
 @bp.route('/files', methods=['POST'])
 @login_required
@@ -113,25 +134,22 @@ def update_file(file_id):
 @login_required
 def delete_file(file_id):
     delete_file(file_id)
-
     return '', 204
 
-@login_required
 @bp.route("/download/<name>")
+@login_required
 def download_file(name):
     files = File.query.filter_by(path=name).all()
     
     return send_file(os.path.join(app.Config.UPLOAD_FOLDER, str(relative_to_files(str(name)))), as_attachment=True)
 
-@login_required
 @bp.route("/shares/<file_id>")
+@login_required
 def get_share(file_id):
-    share = Share.query.filter_by(delegatee_id = current_user.id, file_id=file_id).all()
+    share = Share.query.filter_by(delegatee_id = current_user.id, file_id=file_id).first()
 
-    share_schema = schemas.Share(many=True)  # Create an instance of the File schema
+    share_schema = schemas.Share()  # Create an instance of the File schema
     return jsonify(share_schema.dump(share)) 
-
-    # return send_file(os.path.join(app.Config.UPLOAD_FOLDER, str(relative_to_files(str(name)))), as_attachment=True)
 
 @bp.route('/shares', methods=['POST'])
 @login_required
