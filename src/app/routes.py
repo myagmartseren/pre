@@ -86,8 +86,9 @@ def create_file():
     if file.filename == '':
         return 'No file selected', 400
 
-    generated_uuid = uuid.uuid4()
-    file.save(os.path.join(app.Config.UPLOAD_FOLDER, str(relative_to_files(str(generated_uuid)))))
+    generated_uuid = str(uuid.uuid4())
+    # file.save(os.path.join(app.Config.UPLOAD_FOLDER, str(relative_to_files(str(generated_uuid)))))
+    file.save(relative_to_files(generated_uuid))
 
     name = request.form.get('name')
     key = request.form.get('key')
@@ -139,9 +140,9 @@ def delete_file(file_id):
 @bp.route("/download/<name>")
 @login_required
 def download_file(name):
-    files = File.query.filter_by(path=name).all()
+    files = File.query.filter_by(path=name).first()
     
-    return send_file(os.path.join(app.Config.UPLOAD_FOLDER, str(relative_to_files(str(name)))), as_attachment=True)
+    return send_file(relative_to_files(files.path), as_attachment=True)
 
 @bp.route("/shares/<file_id>")
 @login_required

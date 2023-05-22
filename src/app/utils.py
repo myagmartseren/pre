@@ -19,8 +19,8 @@ def decrypt_data(encrypted_data, key):
 OUTPUT_PATH = Path(__file__).parent
 
 def relative_to_files(path:str) -> Path:
-    ASSETS_PATH = OUTPUT_PATH / Path(r"../files")
-    return ASSETS_PATH
+    ASSETS_PATH = OUTPUT_PATH / Path(r"../../files")
+    return ASSETS_PATH / Path(path)
 
 from itsdangerous import URLSafeTimedSerializer
 from flask import current_app
