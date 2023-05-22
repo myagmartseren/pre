@@ -86,6 +86,7 @@ def login():
 
     access_token = generate_token(user)
 
+    print("login fucking id",user.id)
     return jsonify({
         'id': user.id,
         'username': user.username,

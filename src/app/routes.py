@@ -4,7 +4,7 @@ import uuid
 
 from flask import Blueprint, jsonify, request, send_file
 from flask_login import *
-from app.models import User, File
+from app.models import *
 import app.schemas as schemas
 from app.services import *
 from werkzeug.utils import secure_filename
@@ -22,12 +22,33 @@ def get_users():
     users = User.query.all()
     return jsonify(User.dump(users, many=True))
 
+@bp.route('/users/<email>', methods=['GET'])
+@login_required
+def get_user(email):
+    user = User.query.filter_by(email = email).first()
+
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+    user_schema = schemas.User()
+    return jsonify(user_schema.dump(user))
+
 
 @bp.route('/files', methods=['GET'])
 @login_required
 def get_files():
-    user_id = current_user.id
-    files = File.query.filter_by(owner_id=user_id).all()
+    query_params = request.args
+    delegator_id = query_params.get("delegator_id")
+    delegatee_id = query_params.get("delegatee_id")
+    
+    if delegator_id is not None:
+        query = File.query.filter_by(delegator_id=delegator_id)
+    elif delegatee_id is not None:
+        query = File.query.filter_by(delegatee_id=delegatee_id)
+    else:
+        print("owner_id")
+        query = File.query.filter_by(owner_id=current_user.id)
+    files = query.all()
+    print(files)
     file_schema = schemas.File(many=True)  # Create an instance of the File schema
     return jsonify(file_schema.dump(files))  # Serialize the files using the schema
 
@@ -95,8 +116,42 @@ def delete_file(file_id):
 
     return '', 204
 
+@login_required
 @bp.route("/download/<name>")
 def download_file(name):
     files = File.query.filter_by(path=name).all()
     
     return send_file(os.path.join(app.Config.UPLOAD_FOLDER, str(relative_to_files(str(name)))), as_attachment=True)
+
+@login_required
+@bp.route("/shares/<file_id>")
+def get_share(file_id):
+    share = Share.query.filter_by(delegatee_id = current_user.id, file_id=file_id).all()
+
+    share_schema = schemas.Share(many=True)  # Create an instance of the File schema
+    return jsonify(share_schema.dump(share)) 
+
+    # return send_file(os.path.join(app.Config.UPLOAD_FOLDER, str(relative_to_files(str(name)))), as_attachment=True)
+
+@bp.route('/shares', methods=['POST'])
+@login_required
+def create_share():
+    data = request.get_json()
+    file_id = data.get('file_id')
+    delegator_id = data.get('delegator_id')
+    delegatee_id = data.get('delegatee_id')
+    rekey = data.get('rekey')
+
+    print("request data",data)
+    share = Share(
+        file_id=file_id,
+        delegator_id=delegator_id, 
+        delegatee_id=delegatee_id,
+        rekey=rekey,
+    )
+
+    db.session.add(share)
+    db.session.commit()
+
+
+    return jsonify({'id': share.id})

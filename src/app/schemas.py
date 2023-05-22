@@ -7,6 +7,8 @@ class User(Schema):
     firstname = fields.Str()
     lastname = fields.Str()
     email = fields.Str()
+    public_key = fields.Str()
+
 
 class File(Schema):
     id = fields.Int(dump_only=True)
