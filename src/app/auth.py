@@ -41,8 +41,6 @@ def register():
 
     print("signing_key:",secret_key.to_secret_bytes())
     user = User(
-        firstname=firstname,
-        lastname=lastname, 
         email=email,
         username=username,
         password_hash=hashed_password,
