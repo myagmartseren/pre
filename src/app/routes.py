@@ -11,6 +11,7 @@ from werkzeug.utils import secure_filename
 from app.utils import relative_to_files
 from app.models import db
 from app.auth import login_required 
+from umbral import (SecretKey, Signer,PublicKey, CapsuleFrag,Capsule,encrypt, decrypt_original,decrypt_reencrypted, generate_kfrags,reencrypt)
 
 bp = Blueprint('api', __name__)
 
@@ -49,10 +50,8 @@ def get_files():
     elif delegatee_id is not None:
         query = File.query.filter_by(delegatee_id=current_user.id)
     else:
-        print("owner_id")
         query = File.query.filter_by(owner_id=current_user.id)
     files = query.all()
-    print(files)
     file_schema = schemas.File(many=True)  # Create an instance of the File schema
     return jsonify(file_schema.dump(files))  # Serialize the files using the schema
 
@@ -157,11 +156,16 @@ def get_share(file_id):
 def create_share():
     data = request.get_json()
     file_id = data.get('file_id')
-    delegator_id = data.get('delegator_id')
+    delegator_id = current_user.id
     delegatee_id = data.get('delegatee_id')
     rekey = data.get('rekey')
 
-    print("request data",data)
+    file = File.query.get(file_id)
+    
+    capsule = Capsule.from_bytes(bytes.fromhex(file.capsule))
+
+    cfrag = reencrypt(capsule=capsule, kfrag=kfrags[0])
+
     share = Share(
         file_id=file_id,
         delegator_id=delegator_id, 

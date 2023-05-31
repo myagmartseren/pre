@@ -36,10 +36,7 @@ def register():
     public_key = secret_key.public_key()
 
     signing_key = SecretKey.random()
-    verifying_key = signing_key.public_key()
-    signer = Signer(signing_key)
 
-    print("signing_key:",secret_key.to_secret_bytes())
     user = User(
         email=email,
         username=username,
@@ -53,7 +50,6 @@ def register():
 
     access_token = generate_token(user)
 
-    print("secret_key.__str__()",str(secret_key))
     return jsonify({
         'id': user.id,
         'username': user.username,
@@ -84,7 +80,6 @@ def login():
 
     access_token = generate_token(user)
 
-    print("login fucking id",user.id)
     return jsonify({
         'id': user.id,
         'username': user.username,
@@ -94,7 +89,6 @@ def login():
 
 @bp.route('/logout', methods=['POST'])
 def logout():
-    # Log out the current user
     logout_user()
     return jsonify({'message': 'Logged out successfully'})
 
@@ -120,12 +114,10 @@ def login_required(f):
             access_token = header_value.split(' ')[-1]
 
         if not access_token:
-            print('Missing access token')
             return 'Missing access token', 401
 
         user = verify_access_token(access_token)
         if not user:
-            print('Invalid access token')
             return 'Invalid access token', 401
 
         login_user(user)
@@ -135,31 +127,19 @@ def login_required(f):
     return decorated_function
 
 def verify_access_token(access_token):
-    # Implement your access token verification logic here
-    # For example, decode the access token and validate it against a stored token
-    # Retrieve the user based on the access token and return it
-    # If the access token is invalid or expired, return None
-
     if not access_token:
-        print("accees_token none")
         return None
 
-    # Sample implementation:
-    # Decode the access token
     decoded_token = decode_access_token(access_token,current_app.config['SECRET_KEY'])
 
     if decoded_token is None:
-        print("decoded_token none")
         return None
 
-    # Check if the token is valid and not expired
     if is_token_valid(decoded_token):
-        # Retrieve the user based on the token data
         user_id = decoded_token.get('user_id')
         user = User.query.get(user_id)
         return user
     
-    print("accees_token none 2")
     return None
 
 import jwt
@@ -171,31 +151,22 @@ def decode_access_token(access_token, secret_key):
 
     try:
         decoded_token = jwt.decode(access_token, secret_key, algorithms=['HS256'])
-        print("value", decoded_token)
         return decoded_token
     except jwt.ExpiredSignatureError:
-        print("ExpiredSignatureError")
-        # Handle expired token
         return None
     except jwt.InvalidTokenError:
-        print("InvalidTokenError")
-        # Handle invalid token
         return None
 
 def is_token_valid(decoded_token):
     if decoded_token is None:
-        print("is_token_valid decoded_token none")
         return False
 
     expiration_timestamp = decoded_token.get('exp')
     if expiration_timestamp is None:
-        print("is_token_valid expiration_timestamp none")
         return False
 
     current_timestamp = datetime.utcnow().timestamp()
     if current_timestamp >= expiration_timestamp:
-        # Token has expired
-        print("Token has expired")
         return False
 
     return True
