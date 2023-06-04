@@ -11,10 +11,9 @@ from werkzeug.utils import secure_filename
 from app.utils import relative_to_files
 from app.models import db
 from app.auth import login_required 
-from umbral import (SecretKey, Signer,PublicKey, CapsuleFrag,Capsule,encrypt, decrypt_original,decrypt_reencrypted, generate_kfrags,reencrypt)
+from umbral import (Capsule,reencrypt, VerifiedKeyFrag)
 
 bp = Blueprint('api', __name__)
-
 
 # Rest of the code...
 @bp.route('/users', methods=['GET'])
@@ -37,7 +36,6 @@ def get_user(email):
     user_schema = schemas.User()
     return jsonify(user_schema.dump(user))
 
-
 @bp.route('/files', methods=['GET'])
 @login_required
 def get_files():
@@ -54,8 +52,17 @@ def get_files():
     files = query.all()
     file_schema = schemas.File(many=True)  # Create an instance of the File schema
     return jsonify(file_schema.dump(files))  # Serialize the files using the schema
-
     # return jsonify(schemas.File.dump(files, many=True,obj=files))
+
+@bp.route('/shares/<file_id>/users', methods=['GET'])
+@login_required
+def get_user_by_file(file_id):
+    shares = Share.query.filter_by(file_id=file_id).all()
+    shared_user_ids = [share.delegatee_id for share in shares]
+    
+    users = User.query.filter(User.id.in_(shared_user_ids)).all()
+    user_emails = [user.email for user in users]
+    return jsonify(user_emails)
 
 @bp.route('/files/shares', methods=['GET'])
 @login_required
@@ -71,6 +78,7 @@ def get_files_by_delegate():
     else:
         query = File.query.filter_by(owner_id=current_user.id)
     files = query.all()
+
     file_schema = schemas.File(many=True)  # Create an instance of the File schema
     return jsonify(file_schema.dump(files))  # Serialize the files using the schema
 
@@ -81,7 +89,6 @@ def create_file():
         return 'No file part in the request', 400
 
     file = request.files['file']
-
     if file.filename == '':
         return 'No file selected', 400
 
@@ -95,16 +102,16 @@ def create_file():
 
     new_file = File(
         name=name,
-        key=bytes.fromhex(key),
-        capsule=bytes.fromhex(capsule),
+        key=key,
+        capsule=capsule,
         path=str(generated_uuid),
         owner_id=current_user.id,
     )
+
     db.session.add(new_file)
     db.session.commit()
 
     return 'File uploaded successfully'
-
 
 @bp.route('/files/<file_id>', methods=['GET'])
 @login_required
@@ -121,14 +128,10 @@ def update_file(file_id):
     data = request.get_json()
     name = data.get('name')
     content = data.get('content')
-
     file = update_file(file_id, name=name, content=content)
-
     if not file:
         return jsonify({'message': 'File not found'}), 404
-
     return jsonify(schemas.File.dump(file))
-
 
 @bp.route('/files/<file_id>', methods=['DELETE'])
 @login_required
@@ -161,20 +164,36 @@ def create_share():
     rekey = data.get('rekey')
 
     file = File.query.get(file_id)
-    
     capsule = Capsule.from_bytes(bytes.fromhex(file.capsule))
-
-    cfrag = reencrypt(capsule=capsule, kfrag=kfrags[0])
-
+    cfrag = reencrypt(capsule=capsule, kfrag=VerifiedKeyFrag.from_verified_bytes(bytes.fromhex(rekey)))
     share = Share(
         file_id=file_id,
         delegator_id=delegator_id, 
         delegatee_id=delegatee_id,
-        rekey=rekey,
+        rekey=cfrag.__bytes__().hex(),
     )
 
     db.session.add(share)
     db.session.commit()
 
-
     return jsonify({'id': share.id})
+
+@bp.route('/shares/<file_id>/<email>', methods=['DELETE'])
+@login_required
+def delete_share(file_id, email):
+    user = User.query.filter_by(email=email).first()
+    
+    if user is None:
+        return 'User not found', 404
+    
+    share = Share.query.filter_by(file_id=file_id).first()
+    if current_user.id != share.delegator_id:
+        return "Permission denied", 400
+
+    if share is None:
+        return "Share not found", 404
+    
+    db.session.delete(share)
+    db.session.commit()
+    
+    return 'Share deleted successfully'

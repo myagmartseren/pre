@@ -35,7 +35,6 @@ class File(db.Model):
     deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
     shares = db.relationship('Share', backref='file', lazy=True)
-    # @pre_dump
     def pre_dump(self, obj):
         obj.name = obj.filename
         return obj
