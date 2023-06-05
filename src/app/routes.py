@@ -30,7 +30,6 @@ def get_user(email):
         # user = User.query.().first()
     else:
         user = User.query.filter_by(email = email).first()
-
     if not user:
         return jsonify({'message': 'User not found'}), 404
     user_schema = schemas.User()

@@ -5,19 +5,23 @@ from .utils import generate_key, generate_token
 from app.models import User, db
 import app
 bp = Blueprint('auth', __name__, url_prefix='/auth')
+import re
+
+email_regex = r'^[\w\.-]+@[\w\.-]+\.\w+$'
 
 @bp.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    firstname = data.get('firstname')
-    lastname = data.get('lastname')
     username = data.get('username')
     password = data.get('password')
     email = data.get('email')
 
     if not email or not password:
         return jsonify({'error': 'Missing email or password'}), 400
-
+    
+    if not re.match(email_regex, email):
+        return jsonify({'error': 'Invalid email format'}), 400
+    
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
         return jsonify({'error': 'Email already taken'}), 400
@@ -28,9 +32,7 @@ def register():
     
     hashed_password = generate_password_hash(password)
 
-    from umbral import (
-    SecretKey, Signer, CapsuleFrag,
-    encrypt, generate_kfrags, reencrypt, decrypt_original, decrypt_reencrypted)
+    from umbral import (SecretKey)
 
     secret_key = SecretKey.random()
     public_key = secret_key.public_key()
